@@ -1,0 +1,266 @@
+\documentclass[handout]{beamer}
+\usepackage{textpos}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\usepackage{xcolor}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+
+\lstset{language=C++,
+           basicstyle=\ttfamily\scriptsize,
+           keywordstyle=\color{blue}\ttfamily,
+           stringstyle=\color{red}\ttfamily,
+           commentstyle=\color{mygreen}\ttfamily,
+          breaklines=true,
+          captionpos=b,
+          numbers=left,
+          numbersep=5pt,
+          numberstyle=\tiny\color{mygray},
+          rulecolor=\color{black},
+          xleftmargin=\parindent,
+          frame=single,
+          backgroundcolor=\color{white}
+}
+
+%\hypersetup{%
+%colorlinks=true,% hyperlinks will be black
+%linkcolor=blue
+%}
+
+% \usepackage{beamerthemesplit} // Activate for custom appearance
+
+\setbeamercolor{normal text}{fg=black,bg=white}
+\definecolor{beamer@blendedblue}{rgb}{0,0,0}
+\setbeamercolor{structure}{fg=beamer@blendedblue}
+
+
+\title{Getting Started with CUDA}
+\author{
+	\includegraphics[width=3cm]{../media/logo/NVLogo_2D.eps}
+	\vspace{0.75cm}
+	\\}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+%\section[Outline]{}
+\begin{frame}{Outline}
+\tableofcontents
+\end{frame}
+
+\addtobeamertemplate{frametitle}{}{%
+\begin{textblock*}{200mm}(.75\textwidth,-0.35cm)
+\includegraphics[width=3cm]{../media/logo/NVLogo_2D_H.eps}
+\end{textblock*}}
+
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \insertframenumber/\inserttotalframenumber
+}
+
+\section{Is the Device Visible?}
+\begin{frame}{The Device}
+\begin{itemize}
+	\item<1->Before programing in CUDA, and even before installing a driver, need to check if the OS sees an NVIDIA device. 
+	\item<2->On linux this can be as easy as \textbf{{\fontfamily{qcr}\selectfont ls -l /dev/nv*}} or use the \textbf{{\fontfamily{qcr}\selectfont lspci}} command which provides detailed information about all PCI buses and devices in the system
+	\item<3->On OS X goto ``About This Mac'' (beware graphics-switching)
+\end{itemize}
+
+\begin{figure}
+\begin{center}
+\includegraphics<3->[width=6cm]{../media/AboutThisMac.png}
+\end{center}
+\end{figure}
+\end{frame}
+
+\section{Device Drivers and Supporting Utilities}
+\begin{frame}{GPU Device Drivers}
+\begin{itemize}
+%\itemsep1em
+\setbeamercovered{transparent}
+	\item<1->CUDA installer comes with a driver but do not blindly rely on this driver version to match your specific GPU.
+	\item<2->Go to the \href{http://www.nvidia.com/Download/index.aspx}{\color{blue}NVIDIA drivers download page} to lookup current driver version for your device
+	\item<3-> On Windows and Linux systems, the NVIDIA display driver installs the \textbf{{\fontfamily{qcr}\selectfont nvidia-smi}} command line utility.  The \href{https://developer.nvidia.com/nvidia-system-management-interface}{NVIDIA \color{blue} System Management Interface} is intended to aid in the management and monitoring of NVIDIA GPU devices.
+	\item<4->The \textbf{{\fontfamily{qcr}\selectfont nvidia-smi}} command line utility is the go-to tool for querying installed drivers, device information, device state, device performance (e.g. power, temp, clock speed), etc 
+\end{itemize}
+\end{frame}
+
+\section{General CUDA Requirements}
+\begin{frame}{NVIDIA CUDA Toolkit}
+General requirements to use CUDA on your system:
+\begin{itemize}
+	\item<1-> a CUDA-capable GPU device connected via PCI
+	\item<1->gcc or Clang compiler and toolchain
+	\item<1->the \href{https://developer.nvidia.com/cuda-toolkit}{\color{blue}NVIDIA CUDA Toolkit}
+\end{itemize}
+\hfill \break
+\onslide<2->{Links to detailed installation guides for each OS below:} 
+\begin{itemize}
+	\item<2->\href{http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows}{\color{blue}Windows}
+	\item<2->\href{http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-linux}{\color{blue}Linux}
+	\item<2->\href{http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-mac-os-x}{\color{blue}OSX}
+\end{itemize}
+\end{frame}
+
+\section{Hello World}
+\begin{frame}[fragile]{CUDA Programing: The Very Basics}
+\lstinputlisting[language=C++,caption={Hello world in CUDA (runtime API)}]{../src/helloWorld.cu}
+\end{frame}
+
+\begin{frame}{CUDA API Level}
+\begin{itemize}
+\itemsep1em
+	\item<1->For managing the device and organizing threads, CUDA consists of a higher-level \href{http://docs.nvidia.com/cuda/cuda-runtime-api/index.html}{\color{blue}\emph{runtime} API} and a low-level \href{http://docs.nvidia.com/cuda/cuda-driver-api/index.html}{\color{blue}\emph{driver} API}.
+	\item<2->Each function of the runtime API calls are broken down into more basic driver API operations.
+	\item<3->While the driver API does offer more explicit control over how the GPU device is used but does not provide any performance gains over the runtime API and is more difficult to program.
+	\item<4->Most (all?) modern CUDA applications and libraries (e.g. cuBLAS, cuFFT) are built on the runtime API.
+	\item<5->Note driver API calls start with ``cu'' while runtime API calls start with ``cuda'' (e.g. {\fontfamily{qcr}\selectfont cudaDeviceSynchronize()})
+\end{itemize}
+\end{frame}
+\section{The CUDA Compiler}
+\begin{frame}{The CUDA Compiler:  \textbf{{\fontfamily{qcr}\selectfont nvcc}}}
+\begin{itemize}
+\setbeamercovered{transparent}
+	\item<1->The CUDA \textbf{{\fontfamily{qcr}\selectfont nvcc}} compiler is based on the widely used LLVM open source compiler infrastructure.
+	\item<2->CUDA programs consist of a mixture of \emph{host} code for the CPU and \emph{device} code for the GPU.
+	\item<3->The \textbf{{\fontfamily{qcr}\selectfont nvcc}} compiler separates the device code from the host code during the compilation process.  
+	\item<4->The host code is standard C and is compiled with C compilers while the CUDA C device code is compiled by \textbf{{\fontfamily{qcr}\selectfont nvcc}}.
+	\item<5->During the link stage, CUDA runtime libraries (libcudart.so.4) are added for kernel procedure calls and explicit GPU device manipulation. 
+	\item<6->Many additional details available via the \href{http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc}{\color{blue}\textbf{{\fontfamily{qcr}\selectfont nvcc}} documentation}  
+\end{itemize}
+\end{frame}
+
+\begin{frame}{\textbf{{\fontfamily{qcr}\selectfont nvcc}} and PTX}
+\begin{itemize}
+\setbeamercovered{transparent}
+	\item<1->PTX which stands for ``Parallel Thread eXecution'' is the \emph{intermediate representation} of the compiled GPU code that can be further compiled into native GPU microcode.
+	\item<2->This is the mechanism that enables CUDA applications to be ``future-proof'' against instruction set innovations by NVIDIA.
+	\item<3->The PTX code is typically compiled into hardware specific microcode in an on-deman fashion (\textbf{JIT}ted) by the CUDA driver.  This online compilation process happens automatically when running CUDART applications compiled with the {\fontfamily{qcr}\selectfont --fatbin} option (default).
+	\item<4->The PTX code can be manually compiled into microcode using the PTX assembler \textbf{{\fontfamily{qcr}\selectfont ptxas}}.  The resulting CUDA binary microcode is called a "cubin" (pronounced like ``Cuban'').
+	\item<5-> Cubin files can be disassembled with {\fontfamily{qcr}\selectfont cuobjdump} using the option {\fontfamily{qcr}\selectfont --dump-sass}.  See the \href{http://docs.nvidia.com/cuda/cuda-binary-utilities}{\color{blue}docs} for more information on CUDA binary utilities.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{\textbf{{\fontfamily{qcr}\selectfont nvcc}} and PTX continued \ldots}
+\begin{itemize}
+\setbeamercovered{transparent}
+\itemsep1em
+	\item<1->Both {\fontfamily{qcr}\selectfont .cubin} microcode and {\fontfamily{qcr}\selectfont PTX} representations of each kernel are included in the \textbf{{\fontfamily{qcr}\selectfont nvcc}} ``fatbin'' executable.
+	\item<2->If the executable is run on hardware which does not support any of the {\fontfamily{qcr}\selectfont .cubin} representations, the driver compiles the {\fontfamily{qcr}\selectfont PTX} version.
+	\item<3->Since {\fontfamily{qcr}\selectfont PTX} compilation can be time consuming, the driver caches theses compiled kernels on disk for repeated invocation.
+	\item<4->Note that {\fontfamily{qcr}\selectfont PTX} code can be generated at runtime and compiled explicitly by the driver by calling {\fontfamily{qcr}\selectfont cuModuleLoadEx()}. 
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Compiling CUDA Code}
+\begin{itemize}
+\setbeamercovered{transparent}
+	\item<1->As a compiler driver, \textbf{{\fontfamily{qcr}\selectfont nvcc}} does nothing more than set up a build environment and spawn a combination of native tools (e.g. the C compiler installed on the system) and CUDA specific command-line tools (e.g. \textbf{{\fontfamily{qcr}\selectfont ptxas}})
+	\item<2->To compile CUDA program simply invoke \textbf{{\fontfamily{qcr}\selectfont nvcc}} {\fontfamily{qcr}\selectfont myprog.cu}
+	\item<3->Use the {\fontfamily{qcr}\selectfont--verbose} option to view the build process or {\fontfamily{qcr}\selectfont--dryrun} option to generate the build commands without actually executing them.
+	\item<4->There are many options for guiding the code generation.  In particular the {\fontfamily{qcr}\selectfont--gpu-architecture} option for specifying which {\fontfamily{qcr}\selectfont PTX} version to emit and the {\fontfamily{qcr}\selectfont--gpu-code} option for specifying which version of Streaming Multiprocessor (SM) microcode ({\fontfamily{qcr}\selectfont.cubin}) to produce ({\fontfamily{qcr}\selectfont sm\_1[0123]}, {\fontfamily{qcr}\selectfont sm\_2[01]}, {\fontfamily{qcr}\selectfont sm\_3[05]}).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{A Note on CUDA Header Files}
+\begin{itemize}
+\itemsep1em
+	\item<1->{There are three key header files when programing in CUDA:}
+	\break
+	\begin{itemize}
+	\itemsep1em
+		\item<1->{\fontfamily{qcr}\selectfont cuda.h} defining types and host functions for the CUDA \emph{driver} API.
+		\item<1->{\fontfamily{qcr}\selectfont cuda\_runtime\_api.h} which defines types and host functions and types for the CUDA \emph{runtime} API. 
+		\item<1->{\fontfamily{qcr}\selectfont cuda\_runtime.h} contains a superset of definitions including everything from {\fontfamily{qcr}\selectfont cuda\_runtime\_api.h}, as well as built-in type definitions, function overlays for the CUDA language extensions, and device intrinsic functions.
+	\end{itemize}
+	\item<1->Notice that when compiling with \textbf{{\fontfamily{qcr}\selectfont nvcc}} the appropriate CUDA headers are included automatically.
+\end{itemize}
+
+\end{frame}
+
+
+\section{Profiling CUDA Applications}
+\begin{frame}{Profiling with \textbf{{\fontfamily{qcr}\selectfont nvprof}} and \textbf{{\fontfamily{qcr}\selectfont nvvp}}}
+\begin{itemize}
+\setbeamercovered{transparent}
+	\item<1->As of CUDA 5.0, \textbf{{\fontfamily{qcr}\selectfont nvprof}} is available to help collect timeline information from the application CPU and GPU activity (e.g. kernel execution, memory transfers, and API calls).
+	\item<2->The Visual Profiler, \textbf{{\fontfamily{qcr}\selectfont nvvp}}, displays a timeline of your application's activity on both the CPU and GPU so that you can identify opportunities for performance improvement. 
+	\item<3->In addition, \textbf{{\fontfamily{qcr}\selectfont nvvp}} will analyze the application to detect potential performance bottlenecks and provide recomendations to eliminate or reduce those bottlenecks.
+	\item<4->Both \textbf{{\fontfamily{qcr}\selectfont nvprof}} and \textbf{{\fontfamily{qcr}\selectfont nvvp}} are powerful tools to help understand where time is being spent in an application.  In many GPU based workloads it is important to understand the compute to communication ratio.  That is, number of instructions per byte accessed. Most HPC workloads are bound by memory bandwidth.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Debugging CUDA Applications}
+
+\begin{itemize}
+\itemsep1em
+	\item<1->\href{http://docs.nvidia.com/cuda/cuda-gdb/index.html}{\color{blue}CUDA-GDB} is the NVIDIA tool for debugging CUDA kernels running on Linux and Mac operating systems.
+	\item<1->CUDA-GDB is an extension to the x86-64 port of GDB, the GNU Project debugger.
+	\item<1->The CUDA debugger is designed to allow simultaneous debugging of both GPU and CPU code within the same application as well as supports debugging of both the CUDA driver API and/or the CUDA runtime API.
+	\item<1->In order to use debugging tools, compile with \textbf{{\fontfamily{qcr}\selectfont nvcc}} {\fontfamily{qcr}\selectfont -g -G} which embeds debugging information for both host and device code as well as disable optimizations so that program state can be inspected during execution.
+\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Debugging CUDA Applications}
+
+\begin{itemize}
+	\item<1->\href{http://docs.nvidia.com/cuda/cuda-memcheck/index.html}{\color{blue}CUDA-MEMCHECK} is a functional correctness checking suite included in the CUDA toolkit.
+	\item<1->In short, {\fontfamily{qcr}\selectfont memcheck} is a memory access error and leak detection tool.
+	\item<1->The {\fontfamily{qcr}\selectfont memcheck} tool can precisely detect and report out of bounds and misaligned memory accesses to global, local, shared and global atomic instructions in CUDA applications
+	\item<1->To use the {\fontfamily{qcr}\selectfont memcheck} tool on Linux, compile with \newline {\fontfamily{qcr}\selectfont \textbf{nvcc} -Xcompiler -rdynamic -lineinfo}  
+	\item<1->Similarly, on Windows compile with \newline {\fontfamily{qcr}\selectfont \textbf{nvcc} -Xcompiler /Zi -lineinfo} 
+	\item<1->When compiling with these additional options, {\fontfamily{qcr}\selectfont \textbf{nvcc}} generates executables  that will contain sufficient metadata for {\fontfamily{qcr}\selectfont memcheck} to display helpful messages but maintain performance characteristics of the original application. 
+\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Querying Device Information}
+\begin{itemize}
+\itemsep1em
+	\item<1->The \href{http://docs.nvidia.com/cuda/cuda-runtime-api/index.html}{\color{blue}runtime API} provides a variety of functions for managing GPU devices and querying their associated information.
+	\item<1->To figure out how many devices are visible to the host use {\fontfamily{qcr}\selectfont cudaGetDeviceCount()} 
+	\item<1->To switch between GPU devices use the {\fontfamily{qcr}\selectfont cudaSetDevice()}
+	\item<1->Each GPU device properties can be queried using {\fontfamily{qcr}\selectfont cudaGetDeviceProperties()} which returns a struct of type \href{http://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html}{\color{blue}{\fontfamily{qcr}\selectfont cudaDeviceProp}} containing various information about the device.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Device Properties Example: runtime API}
+\lstinputlisting[language=C++,caption={Getting information about devices in CUDA (runtime API)}]{../src/devproprt.cu}
+\end{frame}
+
+\begin{frame}{Driver API for Device Attributes}
+\begin{itemize}
+\itemsep1em
+	\item<1-> Similarly the driver API has a variety of low-level functions for \href{http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__DEVICE.html}{\color{blue}device attributes}.
+	\item<1->Before a device can be queried for attributes, the device must be initialized with  {\fontfamily{qcr}\selectfont cuInit(int devId)}
+	\item<1->Most driver API calls require handle to the particular device which is provided by {\fontfamily{qcr}\selectfont cuDeviceGet()}
+	\item<1->There are explicit functions for device count, device name, and total global memory.
+	\item<1->All other device attributes are queried via the {\fontfamily{qcr}\selectfont cuDeviceGetAttribute()} function and a set of attribute macros.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Device Properties Example: driver API}
+\lstinputlisting[language=C++,caption={Getting information about devices in CUDA (driver API)}]{../src/devpropd.cu}
+\end{frame}
+
+\begin{frame}{CUDA Code Samples}
+\begin{itemize}
+\itemsep1em
+	\item<1->The CUDA Toolkit is prepackaged with a variety of CUDA \href{http://docs.nvidia.com/cuda/cuda-samples/index.html\#samples-reference}{\color{blue}sample codes} which cover both \href{http://docs.nvidia.com/cuda/cuda-samples/index.html\#runtime-cudaapi}{\color{blue}runtime} and \href{http://docs.nvidia.com/cuda/cuda-samples/index.html\#driver-cudaapi}{\color{blue}driver} APIs.
+	\item<1->These samples cover everything from basic bandwidth tests to using features such as Zero-Copy Memory, Asynchronous Data Transfers, Unified Virtual Addressing, Peer-to-Peer Communication, Concurrent Kernels, sharing data between CUDA and Direct3D/OpenGL graphics APIs, using CUDA with MPI and OpenMP, Image Processing, Video encode/decode, CFD, FDTD, and more.
+	\item<1->Typically CUDA code samples are selected for installation when installing the CUDA Toolkit.
+	\item<1->The code samples can be installed after toolkit installation using the {\fontfamily{qcr}\selectfont cuda-install-samples-X.X.sh} script located in the root CUDA directory.
+	 
+\end{itemize}
+\end{frame}
+%http://docs.nvidia.com/cuda/profiler-users-guide
+%\footnote{Create or extend programming languages with support for GPU acceleration using the CUDA Compiler SDK.}
+
+\end{document}
